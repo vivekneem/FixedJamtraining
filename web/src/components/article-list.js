@@ -1,15 +1,15 @@
 import React from "react";
 import Grid from "@material-ui/core/Grid";
-import BlogPostPreview from "./blog-post-preview";
+import FeaturedPost from "./featured-article";
 
-const BlogPreviewList = props => {
+const ArticlePreviewList = props => {
   return (
     <Grid container spacing={4}>
       {props.nodes.map(post => (
-        <BlogPostPreview key={post.id} {...post} />
+        <FeaturedPost key={post.id} {...post} />
       ))}
     </Grid>
   );
 };
 
-export default BlogPreviewList;
+export default ArticlePreviewList;

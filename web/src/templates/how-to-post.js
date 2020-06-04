@@ -1,8 +1,9 @@
 import React from "react";
 import { graphql } from "gatsby";
 import SEO from "../components/seo";
+import loadable from "@loadable/component";
+const Article = loadable(() => import("../components/article"));
 import Layout from "../containers/layout";
-import HowToArticle from "../components/how-to-article";
 
 export const query = graphql`
   query MyQuery($id: String!, $tag: [String]!) {
@@ -88,7 +89,7 @@ const HowToArticleTemplate = ({ data }) => {
   return (
     <Layout>
       {howTo && <SEO title="howToArticle" />}
-      {howTo && <HowToArticle {...howTo} {...relatedArticle} />}
+      {howTo && <Article {...howTo} {...relatedArticle} />}
     </Layout>
   );
 };

@@ -1,81 +1,55 @@
 import React from "react";
 import { graphql } from "gatsby";
-import { makeStyles } from "@material-ui/core/styles";
+import {
+  mapEdgesToNodes,
+  filterOutDocsWithoutSlugs,
+  filterOutDocsPublishedInTheFuture
+} from "../lib/helpers";
+import BlogPostPreviewList from "../components/blog-post-preview-list";
 import Container from "../components/container";
-import Card from "@material-ui/core/Card";
-import EmblaCarousel from "../components/embelaCarousel";
-import EmblaTileCarousel from "../components/embelaTileCarousel";
-import Img from "gatsby-image";
+import GraphQLErrorList from "../components/graphql-error-list";
 import SEO from "../components/seo";
 import Layout from "../containers/layout";
-import styles from "../components/materialUI/carouselStyle";
-
-const useStyles = makeStyles(styles);
 
 export const query = graphql`
-  query HomePageQuery {
-    heroSlider: sanityArticleSlider(
-      sliderName: {}
-      slideType: { sliderName: { eq: "Hero Slider - Type 1" } }
-    ) {
-      sliderName
-      slides {
-        ... on SanityFeatureArticle {
-          id
-          heroImage {
-            asset {
-              fluid {
-                ...GatsbySanityImageFluid_withWebp
-              }
-            }
-            alt
-          }
-          headline
-          slug {
-            current
-          }
-        }
-        ... on SanityGalleryArticle {
-          id
-          heroImage {
-            asset {
-              fluid {
-                ...GatsbySanityImageFluid_withWebp
-              }
-            }
-            alt
-          }
-          headline
-          slug {
-            current
-          }
-        }
-        ... on SanityHowToArticle {
-          id
-          heroImage {
-            asset {
-              fluid {
-                ...GatsbySanityImageFluid_withWebp
-              }
-            }
-            alt
-          }
-          headline
-          slug {
-            current
-          }
-        }
-      }
+  fragment SanityImage on SanityMainImage {
+    crop {
+      _key
+      _type
+      top
+      bottom
+      left
+      right
     }
-    tileSlider: sanityArticleSlider(
-      sliderName: {}
-      slideType: { sliderName: { eq: "Tile Slider - Type 1" } }
+    hotspot {
+      _key
+      _type
+      x
+      y
+      height
+      width
+    }
+    asset {
+      _id
+    }
+  }
+
+  query IndexPageQuery {
+    site: sanitySiteSettings(_id: { regex: "/(drafts.|)siteSettings/" }) {
+      title
+      description
+      keywords
+    }
+    posts: allSanityPost(
+      limit: 6
+      sort: { fields: [publishedAt], order: DESC }
+      filter: { slug: { current: { ne: null } }, publishedAt: { ne: null } }
     ) {
-      sliderName
-      slides {
-        ... on SanityFeatureArticle {
+      edges {
+        node {
           id
-          heroImage {
+          publishedAt
+          mainImage {
             asset {
               fluid {
                 ...GatsbySanityImageFluid_withWebp
@@ -83,37 +57,8 @@ export const query = graphql`
             }
             alt
           }
-          headline
-          slug {
-            current
-          }
-        }
-        ... on SanityGalleryArticle {
-          id
-          heroImage {
-            asset {
-              fluid {
-                ...GatsbySanityImageFluid_withWebp
-              }
-            }
-            alt
-          }
-          headline
-          slug {
-            current
-          }
-        }
-        ... on SanityHowToArticle {
-          id
-          heroImage {
-            asset {
-              fluid {
-                ...GatsbySanityImageFluid_withWebp
-              }
-            }
-            alt
-          }
-          headline
+          title
+          _rawExcerpt
           slug {
             current
           }
@@ -123,66 +68,41 @@ export const query = graphql`
   }
 `;
 
-const HomePage = ({ data }) => {
-  const classes = useStyles();
-  console.log("data", data);
-  if (data.heroSlider.slides == undefined && data.tileSlider.slides == undefined) {
-    return null;
-  } else {
+const HomePage = props => {
+  const { data, errors } = props;
+
+  if (errors) {
     return (
       <Layout>
-        <SEO title="Home-Page" />
-
-        <Card>
-          <EmblaCarousel>
-            {data.heroSlider.slides.map(slide => {
-              return (
-                <div className={classes.root} key={slide.id}>
-                  <Img
-                    loading={"eager"}
-                    fluid={{
-                      ...slide.heroImage.asset.fluid,
-                      sizes:
-                        "(max-width: 512px) 20vw, (max-width: 768px) 35vw, (max-width: 1280px) 50vw, (max-width: 1680px) 70vw, 90vw"
-                    }}
-                    className={classes.cover}
-                    alt={slide.heroImage.alt}
-                  />
-                  <div className={classes.details}>
-                    <div className={classes.content}>
-                      <h3 className={classes.headline}>{slide.headline}</h3>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </EmblaCarousel>
-        </Card>
-        <Container>
-          <Card>
-            <EmblaTileCarousel>
-              {data.tileSlider.slides.map(slide => {
-                return (
-                  <div key={slide.id}>
-                    <Img
-                      loading={"eager"}
-                      fluid={{
-                        ...slide.heroImage.asset.fluid,
-                        sizes:
-                          "(max-width: 512px) 20vw, (max-width: 768px) 35vw, (max-width: 1280px) 50vw, (max-width: 1680px) 70vw, 90vw"
-                      }}
-                      alt={slide.heroImage.alt}
-                    />
-                    <span>{slide.headline}</span>
-                  </div>
-                );
-              })}
-            </EmblaTileCarousel>
-          </Card>
-        </Container>
+        <GraphQLErrorList errors={errors} />
       </Layout>
     );
   }
+
+  const site = (data || {}).site;
+  const postNodes = (data || {}).posts
+    ? mapEdgesToNodes(data.posts)
+        .filter(filterOutDocsWithoutSlugs)
+        .filter(filterOutDocsPublishedInTheFuture)
+    : [];
+
+  if (!site) {
+    throw new Error(
+      'Missing "Site settings". Open the studio at http://localhost:3333 and add some content to "Site settings" and restart the development server.'
+    );
+  }
+
+  return (
+    <Layout>
+      <SEO title={site.title} description={site.description} keywords={site.keywords} />
+      <Container>
+        <h1 hidden>Welcome to {site.title}</h1>
+        {postNodes && (
+          <BlogPostPreviewList title="All my blog post belong to Vivek" nodes={postNodes} />
+        )}
+      </Container>
+    </Layout>
+  );
 };
 
 export default HomePage;

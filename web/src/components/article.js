@@ -3,9 +3,9 @@ import { makeStyles } from "@material-ui/core/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Grid from "@material-ui/core/Grid";
 import Container from "@material-ui/core/Container";
-import BlogContent from "./blog-content";
-import MainFeaturedBlogPost from "./main-featured-blogpost";
-import BlogSidebar from "./blog-sidebar.js";
+import Main from "./article-content";
+import MainFeaturedPost from "./main-featured-article";
+import Sidebar from "./sidebar";
 
 const useStyles = makeStyles(theme => ({
   mainContainer: {
@@ -16,7 +16,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-const BlogPost = ({ _rawBody, title, mainImage, publishedAt }) => {
+const Article = ({ heroImage, headline, subheading, productList, tags }) => {
   const classes = useStyles();
 
   return (
@@ -24,11 +24,15 @@ const BlogPost = ({ _rawBody, title, mainImage, publishedAt }) => {
       <CssBaseline />
       <Container maxWidth="lg" className={classes.mainContainer}>
         <main>
-          <MainFeaturedBlogPost mainImage={mainImage} title={title} />
-
+          <MainFeaturedPost heroImage={heroImage} headline={headline} subheading={subheading} />
+          {/* <Grid container spacing={4}>
+            {featuredPosts.map(post => (
+              <FeaturedPost key={post.title} post={post} />
+            ))}
+          </Grid> */}
           <Grid container spacing={5} className={classes.mainGrid}>
-            <BlogContent _rawBody={_rawBody} title={title} />
-            <BlogSidebar publishedAt={publishedAt} />
+            <Main productList={productList} />
+            <Sidebar tags={tags} />
           </Grid>
         </main>
       </Container>
@@ -36,4 +40,4 @@ const BlogPost = ({ _rawBody, title, mainImage, publishedAt }) => {
   );
 };
 
-export default BlogPost;
+export default Article;
