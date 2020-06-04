@@ -1,0 +1,58 @@
+import { format, distanceInWords, differenceInDays } from "date-fns";
+import React from "react";
+import Img from "gatsby-image";
+import PortableText from "./portableText";
+import Container from "./container";
+import AuthorList from "./author-list";
+
+import styles from "./blog-post.module.css";
+
+function BlogPost(props) {
+  const { _rawBody, authors, categories, title, mainImage, publishedAt } = props;
+  return (
+    <article className={styles.root}>
+      {mainImage && mainImage.asset && (
+        <div className={styles.mainImage}>
+          <Img
+            fluid={{
+              ...mainImage.asset.fluid,
+              sizes:
+                "(max-width: 512px) 20vw, (max-width: 768px) 35vw, (max-width: 1280px) 50vw, (max-width: 1680px) 70vw, 90vw"
+            }}
+            alt={mainImage.asset.alt}
+          />
+        </div>
+      )}
+      <Container>
+        <div className={styles.grid}>
+          <div className={styles.mainContent}>
+            <h1 className={styles.title}>{title}</h1>
+            {_rawBody && <PortableText blocks={_rawBody} />}
+          </div>
+          <aside className={styles.metaContent}>
+            {publishedAt && (
+              <div className={styles.publishedAt}>
+                {differenceInDays(new Date(publishedAt), new Date()) > 3
+                  ? distanceInWords(new Date(publishedAt), new Date())
+                  : format(new Date(publishedAt), "MMMM Do, YYYY")}
+              </div>
+            )}
+            {authors && <AuthorList items={authors} title="Authors" />}
+            {categories && (
+              <div className={styles.categories}>
+                <h3 className={styles.categoriesHeadline}>Categories</h3>
+                <ul>
+                  {categories.map(category => (
+                    <li key={category._id}>{category.title}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </aside>
+        </div>
+      </Container>
+    </article>
+  );
+}
+
+export default BlogPost;
